@@ -5,7 +5,6 @@ import type { ReactNode } from "react";
 import { ThirdwebProvider } from "thirdweb/react";
 import { useState } from "react";
 import { Toaster } from "sonner";
-import { WrongNetworkAlert } from "@/components/WrongNetworkAlert";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -78,7 +77,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               </div>
             </footer>
 
-            <WrongNetworkAlert />
+       
             <Toaster />
           </body>
         </ThirdwebProvider>
