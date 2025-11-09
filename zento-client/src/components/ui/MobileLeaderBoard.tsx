@@ -310,9 +310,9 @@ const MobileLeaderboardPage = ({ leaderboard }: any) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0e0e0f] flex flex-col">
+    <div className="min-h-screen bg-[#1c1b20] pb-16 flex flex-col">
       {/* Header - Desktop & Mobile compatible */}
-      <header className="bg-[#1a1a1e2c] sticky top-0 z-40 overflow-hidden border-b border-b-[#2c2c2f] px-3 sm:px-4 lg:px-4">
+      <header className="bg-[#1c1b20] sticky top-0 z-40 overflow-hidden border-b border-b-[#2c2c2f] px-3 sm:px-4 lg:px-4">
         <div className="max-w-7xl mx-auto py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 sm:gap-6">
@@ -570,89 +570,7 @@ const MobileLeaderboardPage = ({ leaderboard }: any) => {
         )}
 
         {/* Earn More Points Section */}
-        <div className="mb-3 mt-8 bg-[#1a191e] border border-[#d5a514]/30 rounded-xl p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <PixelCoins className="w-6 h-6 text-[#d5a514]" />
-            <h2 className="text-xl font-bold text-white">Earn More Coins</h2>
-          </div>
-          <p className="text-gray-400 text-sm mb-6">Complete these tasks to boost your ranking</p>
-
-          <div className="space-y-3">
-            {/* Twitter Task */}
-            <div
-              className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
-                completedTasks.twitter
-                  ? "bg-[#d5a514]/10 border-[#d5a514]/50"
-                  : "bg-[#1a191e] border-gray-700/20 hover:border-gray-700/40"
-              }`}
-            >
-              <div className="flex items-center gap-3 flex-1">
-                <div className="w-10 h-10 rounded-full bg-[#1DA1F2]/10 flex items-center justify-center">
-                  <Twitter className="w-5 h-5 text-[#1DA1F2]" />
-                </div>
-                <div>
-                  <div className="font-medium text-white text-sm">Follow us on Twitter</div>
-                  <div className="text-xs text-gray-400">+50 coins</div>
-                </div>
-              </div>
-              <button
-                onClick={() => handleTaskComplete("twitter")}
-                disabled={completedTasks.twitter}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                  completedTasks.twitter
-                    ? "bg-[#d5a514]/20 text-[#d5a514] cursor-not-allowed"
-                    : "bg-[#d5a514] text-white hover:bg-[#016244]"
-                }`}
-              >
-                {completedTasks.twitter ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Completed</span>
-                  </>
-                ) : (
-                  <span>Follow</span>
-                )}
-              </button>
-            </div>
-
-            {/* Telegram Task */}
-            {/* <div
-              className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
-                completedTasks.telegram
-                  ? "bg-[#d5a514]/10 border-[#d5a514]/50"
-                  : "bg-[#1a191e] border-gray-700/20 hover:border-gray-700/40"
-              }`}
-            >
-              <div className="flex items-center gap-3 flex-1">
-                <div className="w-10 h-10 rounded-full bg-[#0088cc]/10 flex items-center justify-center">
-                  <Send className="w-5 h-5 text-[#0088cc]" />
-                </div>
-                <div>
-                  <div className="font-medium text-white text-sm">Join our Telegram</div>
-                  <div className="text-xs text-gray-400">Earn 100 points</div>
-                </div>
-              </div>
-              <button
-                onClick={() => handleTaskComplete("telegram")}
-                disabled={completedTasks.telegram}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                  completedTasks.telegram
-                    ? "bg-[#d5a514]/20 text-[#d5a514] cursor-not-allowed"
-                    : "bg-[#0088cc] text-white hover:bg-[#006699]"
-                }`}
-              >
-                {completedTasks.telegram ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Completed</span>
-                  </>
-                ) : (
-                  <span>Join</span>
-                )}
-              </button>
-            </div> */}
-          </div>
-        </div>
+        
       </div>
 
       <MobileBottomNav />

@@ -12,7 +12,7 @@ const highVolumeMarkets = [
     totalVolume: 35800000,
     participants: 4200,
     timeLeft: "235d left",
-    heroImage: "/gta-market.png",
+    heroImage: "/zento-h.png",
   },
   {
     id: 2,
@@ -23,7 +23,7 @@ const highVolumeMarkets = [
     totalVolume: 28100000,
     participants: 8900,
     timeLeft: "180d left",
-    heroImage: "/taylor-market.png",
+    heroImage: "/hero-slide2.png",
   },
   {
     id: 3,
@@ -34,7 +34,7 @@ const highVolumeMarkets = [
     totalVolume: 27000000,
     participants: 3200,
     timeLeft: "425d left",
-    heroImage: "/avatar-market.png",
+    heroImage: "/zento-h.png",
   },
   {
     id: 4,
@@ -45,7 +45,7 @@ const highVolumeMarkets = [
     totalVolume: 22600000,
     participants: 5100,
     timeLeft: "665d left",
-    heroImage: "/ai-music-market.png",
+    heroImage: "/hero-slide2.png",
   },
   {
     id: 5,
@@ -56,7 +56,7 @@ const highVolumeMarkets = [
     totalVolume: 19200000,
     participants: 2800,
     timeLeft: "210d left",
-    heroImage: "/ps5-market.png",
+    heroImage: "/zento-h.png",
   },
   {
     id: 6,
@@ -67,7 +67,7 @@ const highVolumeMarkets = [
     totalVolume: 15800000,
     participants: 1900,
     timeLeft: "365d left",
-    heroImage: "/dune-market.png",
+    heroImage: "/hero-slide2.png",
   }
 ];
 

@@ -622,15 +622,11 @@ const MarketDetailPage: React.FC<MarketDetailPageProps> = ({ market }) => {
           <div className="max-w-7xl mx-auto py-4 px-3 sm:px-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 sm:gap-6">
-                <h1 className="text-2xl font-bold text-white">
-                  <Link href="/" className="flex items-center">
-                    <img
-                      src="/zento.png"
-                      alt="Zento Logo"
-                      className="ml-1 sm:ml-2 h-10 w-auto sm:h-12 object-contain text-blue-400"
-                    />
-                  </Link>
-                </h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-white">
+                <Link href="/">
+                  <img src="/zento.png" alt="Pivot Logo" className="ml-1 sm:ml-2 h-10 w-10 sm:h-12 sm:w-12" />
+                </Link>
+              </h1>
                 <span className="text-gray-300 ml-6 font-medium transition-colors relative hidden lg:flex pb-1">
                   Market
                   <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-3/4 h-[2px] bg-[#d5a514]"></span>
@@ -823,13 +819,9 @@ const MarketDetailPage: React.FC<MarketDetailPageProps> = ({ market }) => {
         <div className="max-w-7xl mx-auto py-4 px-3 sm:px-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 sm:gap-6">
-              <h1 className="text-2xl font-bold text-white">
-                <Link href="/" className="flex items-center">
-                  <img
-                    src="/zento.png"
-                    alt="Zento Logo"
-                    className="ml-1 sm:ml-2 h-10 w-auto sm:h-12 object-contain text-blue-400"
-                  />
+            <h1 className="text-xl sm:text-2xl font-bold text-white">
+                <Link href="/">
+                  <img src="/zento.png" alt="Pivot Logo" className="ml-1 sm:ml-2 h-10 w-10 sm:h-12 sm:w-12" />
                 </Link>
               </h1>
               <span className="text-gray-300 ml-6 font-medium transition-colors relative hidden lg:flex pb-1">
