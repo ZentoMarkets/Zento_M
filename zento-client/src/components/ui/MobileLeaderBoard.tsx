@@ -312,14 +312,17 @@ const MobileLeaderboardPage = ({ leaderboard }: any) => {
   return (
     <div className="min-h-screen bg-[#1c1b20] pb-16 flex flex-col">
       {/* Header - Desktop & Mobile compatible */}
-      <header className="bg-[#1c1b20] sticky top-0 z-40 overflow-hidden border-b border-b-[#2c2c2f] px-3 sm:px-4 lg:px-4">
-        <div className="max-w-7xl mx-auto py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 sm:gap-6">
+      <header className="bg-[#1c1b20] sticky top-0 z-40 overflow-hidden animate-fadeInUp border-b border-b-[var(--Stroke-Dark,#2c2c2f)]">
+          <div className="max-w-7xl mx-auto py-4 px-3 sm:px-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 sm:gap-6">
               <h1 className="text-xl sm:text-2xl font-bold text-white">
                 <Link href="/">
-                  <img src="/zento.png" alt="Pivot Logo" className="ml-1 sm:ml-2 h-10 w-10 sm:h-12 sm:w-12" />
-                </Link>
+                <img 
+  src="/zento.png" 
+  alt="Zento Logo" 
+  className="ml-1 sm:ml-2 h-10 w-auto sm:h-12"
+/> </Link>
               </h1>
               <Link href="/" className="hidden lg:block group relative ml-6">
                 <span className="text-gray-300 font-medium transition-colors relative inline-block pb-1">
