@@ -76,20 +76,18 @@ const CreateMarket = () => {
     address: MARKET_CONTRACT_ADDRESS,
   });
 
-  const usdtContract = getContract({
+   const usdtContract = getContract({
     client,
     chain,
     address: USDT_CONTRACT_ADDRESS,
   });
 
   // Read USDT balance
-  const { data: usdtBalance, refetch: refetchBalance } = useReadContract({
+  const { data: usdtBalance, refetch: refetchUSDTBalance } = useReadContract({
     contract: usdtContract,
-    method: "balanceOf",
-    params: account?.address ? [account.address] : [],
-    queryOptions: {
-      enabled: !!account?.address,
-    },
+    method: "function balanceOf(address) view returns (uint256)",
+    params: (account?.address ? [account.address] : []) as [string],
+    queryOptions: { enabled: !!account?.address },
   });
 
   // Read minimum liquidity requirement
@@ -603,7 +601,7 @@ const CreateMarket = () => {
       setCurrentStep(3);
       setProgress("Market Created!");
       setMarketProposalStartIndex(-1); // Reset the index
-      refetchBalance();
+      refetchUSDTBalance();
     } catch (err: any) {
       console.error("onCreateMarket error:", err);
       const catchErrorIndex = marketProposalStartIndex >= 0 ? marketProposalStartIndex + 1 : messages.length;

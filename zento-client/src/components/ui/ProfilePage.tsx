@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import {
   BriefcaseBusiness,
   MessageCircle,
-  ChevronDown,
   CheckCircle,
   Presentation,
   Trophy,
@@ -14,7 +13,6 @@ import {
 } from "lucide-react";
 import { truncateAddress } from "@aptos-labs/wallet-adapter-react";
 import { AnimatePresence } from "framer-motion";
-import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 import MobileBottomNav from "./MobileBottomNav";
 import Link from "next/link";
 
@@ -29,18 +27,16 @@ import {
 } from "@/app/view-functions/markets";
 import { useWalletAuth } from "@/app/hooks/useWalletAuth";
 import { PixelCoins } from ".";
-import { ConnectButton, useActiveAccount } from "thirdweb/react";
+import { ConnectButton, useActiveAccount, useReadContract } from "thirdweb/react";
 import { chain, wallets } from "@/lib/thirdweb";
+import { getContract } from "thirdweb";
 
-const USDC_ASSET_ADDRESS: string = "0x69091fbab5f7d635ee7ac5098cf0c1efbe31d68fec0f2cd565e8d168daf52832";
-const config = new AptosConfig({ network: Network.TESTNET });
-const aptos = new Aptos(config);
 const SHARES_DECIMALS = 6; // Updated to 6 for USDC
 const PRICE_SCALE = 10000; // Basis points (0-10000 for 0-1)
 
 const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState("summary");
-  const [balance, setBalance] = useState<number>(0);
+
   const [loadingBalance, setLoadingBalance] = useState(false);
   const [netWorth, setNetWorth] = useState(0);
   const [invested, setInvested] = useState(0);
@@ -57,49 +53,11 @@ const ProfilePage = () => {
   const [loadingTrades, setLoadingTrades] = useState(false);
   const [loadingMarkets, setLoadingMarkets] = useState(false);
 
+  const USDT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_USDT_CONTRACT_ADDRESS!;
+
   const account = useActiveAccount();
   const { user } = useWalletAuth();
-  // Fetch USDC balance
-  const fetchBalance = async () => {
-    if (!account?.address) {
-      setBalance(0);
-      return;
-    }
-
-    setLoadingBalance(true);
-    try {
-      const balances = await aptos.getCurrentFungibleAssetBalances({
-        options: {
-          where: {
-            owner_address: { _eq: account.address.toString() },
-          },
-        },
-      });
-
-      const usdcBalances = balances.filter((b: any) => b.asset_type.toLowerCase() === USDC_ASSET_ADDRESS.toLowerCase());
-
-      let formatted = 0;
-      if (usdcBalances.length > 0) {
-        const primaryBalance = usdcBalances.find((b: any) => b.is_primary === true);
-        if (primaryBalance) {
-          formatted = Number(primaryBalance.amount) / 1e6;
-        } else {
-          const mostRecentBalance = usdcBalances.sort(
-            (a: any, b: any) =>
-              new Date(b.last_transaction_timestamp).getTime() - new Date(a.last_transaction_timestamp).getTime(),
-          )[0];
-          formatted = Number(mostRecentBalance.amount) / 1e6;
-        }
-      }
-
-      setBalance(formatted);
-    } catch (error) {
-      console.error("Error fetching USDC balance:", error);
-      setBalance(0);
-    } finally {
-      setLoadingBalance(false);
-    }
-  };
+  
 
   // Generate slug from market title
   const generateSlug = (title: string) => {
@@ -246,11 +204,32 @@ const ProfilePage = () => {
     }
   };
 
+  const usdtContract = getContract({
+    client,
+    chain,
+    address: USDT_CONTRACT_ADDRESS,
+  });
+
+  // Read USDT balance
+const { data: usdtBalance, refetch: refetchUSDTBalance } = useReadContract({
+  contract: usdtContract,
+  method: "function balanceOf(address) view returns (uint256)",
+  params: (account?.address ? [account.address] : []) as [string],
+  queryOptions: { enabled: !!account?.address },
+});
+
   useEffect(() => {
-    fetchBalance();
-    fetchProfileData();
+    if (account?.address) {
+      refetchUSDTBalance(); 
+      fetchProfileData();
+      setLoadingBalance(false)
+    }
   }, [account?.address]);
 
+  const balance = usdtBalance ? Number(usdtBalance) / 1e18 : 0;
+
+
+  console.log("balancee---", balance)
   // Overview Tab Component
   const OverviewTab = () => (
     <div className="space-y-6">
@@ -718,7 +697,7 @@ const ProfilePage = () => {
                   <div className="h-9 w-32 bg-gray-700/50 rounded-lg animate-pulse mb-1"></div>
                 )}
               </h1>
-              <ChevronDown className="w-4 h-4 text-slate-200/70 mt-1" />
+              {/* <ChevronDown className="w-4 h-4 text-slate-200/70 mt-1" /> */}
             </div>
             <p className="text-gray-400">{truncateAddress(account?.address.toString())}</p>
           </div>

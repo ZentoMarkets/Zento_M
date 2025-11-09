@@ -121,7 +121,7 @@ const { data: usdtBalance, refetch: refetchUSDTBalance } = useReadContract({
 });
 
 const balance = usdtBalance ? Number(usdtBalance) / 1e18 : 0;
-console.log("user balance", balance);
+
 
   // === READ: Market Data ===
 useEffect(() => {

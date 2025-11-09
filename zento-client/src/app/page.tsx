@@ -886,10 +886,10 @@ export default function PivotMarketApp() {
             </div>
 
             {/* Right Side Actions */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center">
               {/* User Coins Display */}
               {user && (
-                <div className="flex items-center gap-1.5 px-3 py-2 bg-[#d5a514]/10 border border-[#d5a514]/30 rounded-lg shadow-sm">
+                <div className="flex items-center gap-1.5 px-2 mr-4 py-2 bg-[#d5a514]/10 border border-[#d5a514]/30 rounded-lg shadow-sm">
                   <PixelCoins className="w-4 h-4 text-[#d5a514]" />
                   <span className="text-sm font-semibold text-[#d5a514]">{(user.points ?? 0).toLocaleString()}</span>
                 </div>
@@ -898,12 +898,6 @@ export default function PivotMarketApp() {
               {/* Right Action Buttons */}
               <div className="flex items-center gap-2 transform -translate-x-2">
                 {[
-                  {
-                    label: "AI Insights",
-                    icon: <ScanEye className="w-4 h-4 sm:w-5 sm:h-5" />,
-                    onClick: () => setShowAIAssistant(!showAIAssistant),
-                    isLink: false,
-                  },
                   {
                     label: "Get Faucet",
                     icon: <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-[#d5a514]" />,

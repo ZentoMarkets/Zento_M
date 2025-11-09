@@ -1,6 +1,6 @@
-# Pivot Market - Smart Contract
+# Zento Markets - Smart Contract
 
-A decentralized prediction market platform built on the Aptos blockchain using the Move programming language. This smart contract enables users to create and trade on binary outcome markets (YES/NO) with automated market-making using a **Constant Product Market Maker (CPMM)** and transparent settlement.
+A permissionless prediction market launchpad built on Binance Smart Chain (BSC). Zento Markets enables users to create and trade on binary outcome markets (YES/NO) with automated market-making using a **Constant Product Market Maker (CPMM)**, native governance token staking, and transparent settlement.
 
 ## Table of Contents
 
@@ -11,19 +11,22 @@ A decentralized prediction market platform built on the Aptos blockchain using t
 - [Installation](#installation)
 - [Usage](#usage)
 - [Contract Functions](#contract-functions)
+- [ZENT Token & Staking](#zent-token--staking)
 - [Fee Structure](#fee-structure)
-- [Analytics & Data](#analytics--data)
+- [Security](#security)
 
 ## Overview
 
-This prediction market platform allows users to:
+Zento Markets allows users to:
 - Create markets on any future event with binary outcomes (YES/NO)
 - Buy and sell positions (shares) on YES or NO outcomes
-- Provide liquidity to earn fees
+- Provide liquidity to individual markets or the global liquidity pool
+- Stake ZENT tokens to earn rewards and unlock platform benefits
+- Participate in dispute resolution for market outcomes
 - Track comprehensive market analytics and history
 - Claim winnings after market resolution
 
-The contract uses a **Constant Product Market Maker (CPMM)** with the formula `x * y = k` for automated market making, ensuring continuous liquidity and price discovery.
+The platform uses a **Constant Product Market Maker (CPMM)** with the formula `x * y = k` for automated market making, ensuring continuous liquidity and price discovery.
 
 ## Features
 
@@ -31,41 +34,51 @@ The contract uses a **Constant Product Market Maker (CPMM)** with the formula `x
 - Create custom prediction markets with titles, descriptions, and resolution criteria
 - Set market end times and designate oracles
 - Require initial liquidity provision
-- Customizable market parameters
+- Two-tier system: **Standard** and **Optima** markets
+- Market creation fee discounts for ZENT stakers
 
 ### 💱 Trading
-- Buy YES or NO positions using a fungible asset (e.g., USDC)
+- Buy YES or NO positions using BSC USDT (BEP-40 compatible)
 - Sell positions before market resolution
 - Dynamic pricing based on CPMM algorithm
-- Slippage protection (max 10% price impact)
+- Slippage protection with maximum price limits
 - Real-time price updates
+- Trading fee discounts for ZENT stakers (up to 50%)
 
 ### 💧 Liquidity Provision
-- Add liquidity to earn trading fees
+- **Market-Specific Liquidity**: Add liquidity to individual markets to earn trading fees
+- **Global Liquidity Pool**: Deposit into a platform-wide pool for automatic allocation to high-performing Optima markets
+- LP boost multipliers for ZENT stakers (up to 2.5x)
 - Remove liquidity before market resolution
-- Receive LP tokens representing pool share
 - Claim principal after market resolution
+
+### 🪙 ZENT Token & Staking
+- Native governance and utility token (ERC-20)
+- Stake ZENT tokens for 30 days to 4 years
+- Four staking tiers: Bronze, Silver, Gold, Platinum
+- Earn staking rewards with tier-based multipliers (1x to 2x)
+- Compound rewards automatically
+- Benefits include:
+  - Trading fee discounts (10% - 50%)
+  - Market creation fee discounts (15% - 70%)
+  - LP boost multipliers (1.2x - 2.5x)
+  - Enhanced staking APY
 
 ### 📊 Advanced Analytics
 - Comprehensive trade history tracking
 - Volume metrics (total, daily, hourly)
-- Price history for charting
-- OHLC (Open/High/Low/Close) candlestick data
 - Unique trader statistics
-- Volume Weighted Average Price (VWAP)
+- Market-specific analytics
+- Platform-wide statistics
 
-### ✅ Resolution & Settlement
+### ✅ Resolution & Disputes
 - Oracle-based market resolution
+- Community dispute mechanism with ZENT token staking
+- 1-hour dispute window after resolution
+- Dispute rewards for successful challenges
+- Token slashing for frivolous disputes
 - Automated payout distribution
-- Platform and creator fee collection
-- Transparent settlement process
 
-### 🔐 Security Features
-- Permission controls (admin/oracle/creator for resolution)
-- Slippage protection
-- Balance validation
-- Market state checks
-- Zero-amount and division-by-zero prevention
 
 ## Architecture
 
@@ -73,11 +86,12 @@ The contract uses a **Constant Product Market Maker (CPMM)** with the formula `x
 
 #### `Market`
 Core market structure containing:
-- Market metadata (title, description, criteria)
-- Trading pools (YES/NO reserves)
+- Market metadata (title, description, resolution criteria)
+- Trading pools (YES/NO reserves with global allocation tracking)
 - Position tracking
 - Analytics data
-- Resolution status
+- Resolution status and disputes
+- Market tier (Standard/Optima)
 
 #### `Position`
 User position in a market:
@@ -87,27 +101,39 @@ User position in a market:
 - Average purchase price
 - Timestamp
 
-#### `TradeRecord`
-Historical trade data:
-- Trade type (BUY, SELL, ADD_LIQUIDITY, etc.)
-- Amount and shares
-- Prices before/after
-- Timestamp and fees
+#### `MarketPool`
+Market-specific liquidity pool:
+- YES and NO reserves
+- Total LP tokens
+- Virtual reserves for price stability
+- Global liquidity allocations
 
 #### `MarketAnalytics`
 Comprehensive market metrics:
 - Volume statistics
 - Trade counts
 - Unique traders
-- Price history
 - Fee totals
 
-#### `MarketPool`
-Market-specific liquidity pool:
-- YES and NO reserves
-- Total LP tokens
-- LP provider balances
-- Virtual reserves for price stability
+#### `GlobalLiquidityPool`
+Platform-wide liquidity management:
+- Total deposits and allocations
+- LP token supply
+- Pending fees distribution
+
+#### `StakeInfo` (ZENT Token)
+User staking information:
+- Staked amount
+- Lock end time
+- Staking tier
+- Reward tracking
+
+#### `Dispute`
+Market dispute details:
+- Disputer address
+- Proposed outcome
+- Stake amount
+- Status and timeline
 
 ### AMM Pricing (CPMM)
 
@@ -118,8 +144,8 @@ x * y = k
 ```
 
 Where:
-- `x` = YES reserve
-- `y` = NO reserve
+- `x` = YES reserve (including global allocation)
+- `y` = NO reserve (including global allocation)
 - `k` = constant product
 
 The price for an outcome is calculated as:
@@ -127,6 +153,8 @@ The price for an outcome is calculated as:
 ```
 Price(outcome) = outcome_reserve / (yes_reserve + no_reserve) * PRICE_PRECISION
 ```
+
+Price bounds: 0.5% to 99.5% (50 to 9950 in PRICE_PRECISION units)
 
 This ensures:
 - ✅ Continuous liquidity
@@ -136,127 +164,138 @@ This ensures:
 
 ## Core Concepts
 
+### Market Tiers
+
+1. **Standard Markets**: Basic markets with initial liquidity < 1,000 USDT
+2. **Optima Markets**: High-liquidity markets (≥ 1,000 USDT) eligible for global liquidity allocation
+
 ### Market States
 
-1. **Active**: Market is open for trading
+1. **Active**: Market is open for trading (before end time)
 2. **Ended**: Past end time, awaiting resolution
 3. **Resolved**: Oracle has determined outcome
+4. **Disputed**: Under community dispute review
 
 ### Outcomes
 
 - **YES (1)**: Event will occur
 - **NO (2)**: Event will not occur
 
-### Trade Types
+### Staking Tiers (ZENT Token)
 
-- `BUY`: Purchase position shares
-- `SELL`: Sell position shares
-- `ADD_LIQUIDITY`: Provide liquidity
-- `REMOVE_LIQUIDITY`: Withdraw liquidity
-- `CLAIM_WINNINGS`: Claim winning position payout
-- `RESOLVE`: Resolve market outcome
-- `CLAIM_LIQUIDITY`: Claim LP principal after resolution
-
-## Installation
-
-### Prerequisites
-
-- Aptos CLI installed
-- Move compiler
-- Fungible asset (e.g., USDC) deployed
-
-### Deployment
-
-```bash
-# Initialize the contract
-aptos move run \
-  --function-id 'YOUR_ADDRESS::y::initialize' \
-  --args object:ASSET_METADATA_ADDRESS
-
-# Compile the module
-aptos move compile
-
-# Publish the module
-aptos move publish
-```
+| Tier | Minimum Stake | Trading Fee Discount | Creation Fee Discount | LP Boost | Reward Multiplier |
+|------|---------------|---------------------|----------------------|----------|-------------------|
+| Bronze | 1,000 ZENT | 10% | 15% | 1.2x | 1.0x |
+| Silver | 10,000 ZENT | 20% | 30% | 1.5x | 1.25x |
+| Gold | 50,000 ZENT | 30% | 50% | 2.0x | 1.5x |
+| Platinum | 250,000 ZENT | 50% | 70% | 2.5x | 2.0x |
 
 ## Usage
 
+### USDT Approval (Required First)
+
+Users must approve USDT spending before interacting with the platform:
+
+```javascript
+// Check and approve USDT allowance
+await zentoMarkets.checkAndApproveUSDT();
+
+// Or approve specific amount for market creation
+await zentoMarkets.approveForMarketCreation(
+  ethers.utils.parseEther("100")
+);
+
+// Check current allowance
+const allowance = await zentoMarkets.getUSDTCurrentAllowance(userAddress);
+```
+
 ### Creating a Market
 
-```bash
-aptos move run \
-  --function-id 'YOUR_ADDRESS::y::create_market' \
-  --args \
-    string:"Will Bitcoin reach $100K by EOY 2025?" \
-    string:"Market description" \
-    string:"Resolution criteria" \
-    u64:1735689600 \
-    address:ORACLE_ADDRESS \
-    u64:100000
+```javascript
+await zentoMarkets.createMarket(
+  "Will Bitcoin reach $100K by EOY 2025?",
+  "Market resolves YES if BTC reaches $100,000 on any major exchange",
+  "Resolution based on CoinGecko data",
+  1735689600, // Unix timestamp for end time
+  "0xOracleAddress",
+  ethers.utils.parseEther("100") // Initial liquidity in USDT
+);
 ```
 
 ### Buying a Position
 
-```bash
-aptos move run \
-  --function-id 'YOUR_ADDRESS::y::buy_position' \
-  --args \
-    u64:MARKET_ID \
-    u8:1 \
-    u64:10000 \
-    u64:1000
-```
-
-### Selling a Position
-
-```bash
-aptos move run \
-  --function-id 'YOUR_ADDRESS::y::sell_position' \
-  --args \
-    u64:MARKET_ID \
-    u64:POSITION_ID \
-    u64:SHARES_TO_SELL \
-    u64:MIN_PRICE
+```javascript
+await zentoMarkets.buyPosition(
+  1, // Market ID
+  1, // Outcome (1=YES, 2=NO)
+  ethers.utils.parseEther("10"), // Amount in USDT
+  9500 // Max price (95% in PRICE_PRECISION)
+);
 ```
 
 ### Adding Liquidity
 
-```bash
-aptos move run \
-  --function-id 'YOUR_ADDRESS::y::add_liquidity' \
-  --args \
-    u64:MARKET_ID \
-    u64:AMOUNT
+```javascript
+// Add to specific market
+await zentoMarkets.addLiquidity(
+  1, // Market ID
+  ethers.utils.parseEther("50") // Amount in USDT
+);
+
+// Add to global pool
+await zentoMarkets.depositGlobalLiquidity(
+  ethers.utils.parseEther("1000")
+);
+```
+
+### Staking ZENT Tokens
+
+```javascript
+await zentoToken.stake(
+  ethers.utils.parseEther("10000"), // Amount
+  90 * 24 * 60 * 60 // Lock duration (90 days)
+);
+
+// Claim rewards
+await zentoToken.claimRewards();
+
+// Compound rewards
+await zentoToken.compoundRewards();
+
+// Unstake (after lock period)
+await zentoToken.unstake(ethers.utils.parseEther("10000"));
 ```
 
 ### Resolving a Market
 
-```bash
-aptos move run \
-  --function-id 'YOUR_ADDRESS::y::resolve_market' \
-  --args \
-    u64:MARKET_ID \
-    u8:OUTCOME
+```javascript
+// Admin, oracle, or creator can resolve
+await zentoMarkets.resolveMarket(
+  1, // Market ID
+  1  // Outcome (1=YES, 2=NO)
+);
+```
+
+### Initiating a Dispute
+
+```javascript
+await zentoMarkets.initiateDispute(
+  1, // Market ID
+  2, // Proposed outcome
+  ethers.utils.parseEther("1000") // ZENT stake
+);
 ```
 
 ### Claiming Winnings
 
-```bash
-aptos move run \
-  --function-id 'YOUR_ADDRESS::y::claim_winnings' \
-  --args \
-    u64:MARKET_ID \
-    u64:POSITION_ID
-```
+```javascript
+await zentoMarkets.claimWinnings(
+  1, // Market ID
+  1  // Position ID
+);
 
-### Claiming Liquidity Principal
-
-```bash
-aptos move run \
-  --function-id 'YOUR_ADDRESS::y::claim_lp_principal' \
-  --args \
-    u64:MARKET_ID
+// Claim LP principal after resolution
+await zentoMarkets.claimLpPrincipal(1);
 ```
 
 ## Contract Functions
@@ -265,54 +304,89 @@ aptos move run \
 
 | Function | Description | Parameters |
 |----------|-------------|------------|
-| `initialize` | Initialize the platform | `asset_metadata` |
-| `create_market` | Create a new market | `title, description, criteria, end_time, oracle, initial_liquidity` |
-| `buy_position` | Buy YES/NO shares | `market_id, outcome, amount, max_slippage` |
-| `sell_position` | Sell position shares | `market_id, position_id, shares, min_price` |
-| `add_liquidity` | Add liquidity to pool | `market_id, amount` |
-| `remove_liquidity` | Remove liquidity | `market_id, lp_tokens` |
-| `resolve_market` | Resolve market outcome | `market_id, outcome` |
-| `claim_winnings` | Claim winning position | `market_id, position_id` |
-| `claim_lp_principal` | Claim LP principal | `market_id` |
-| `update_platform_params` | Update platform parameters | `platform_fee_rate, market_creation_fee, min_initial_liquidity, min_market_duration` |
-| `update_max_price_history` | Update max price history length | `market_id, new_max` |
+| `createMarket` | Create a new market | `title, description, criteria, endTime, oracle, initialLiquidity` |
+| `buyPosition` | Buy YES/NO shares | `marketId, outcome, amount, maxPrice` |
+| `addLiquidity` | Add liquidity to market | `marketId, amount` |
+| `depositGlobalLiquidity` | Deposit to global pool | `amount` |
+| `withdrawGlobalLiquidity` | Withdraw from global pool | `lpTokens` |
+| `resolveMarket` | Resolve market outcome | `marketId, outcome` |
+| `claimWinnings` | Claim winning position | `marketId, positionId` |
+| `claimLpPrincipal` | Claim LP principal | `marketId` |
+| `initiateDispute` | Challenge market outcome | `marketId, proposedOutcome, stakeAmount` |
+| `finalizeDispute` | Admin resolves dispute | `marketId, uphold` |
+| `checkAndApproveUSDT` | Approve USDT spending | None |
+| `setPaused` | Pause/unpause platform | `paused` |
+| `updateFees` | Update fee parameters | `platformFeeRate, marketCreationFee, tradeFeeRate, globalLpFeeRate` |
 
 ### View Functions (Read-Only)
 
 | Function | Description | Returns |
 |----------|-------------|---------|
-| `get_market_details` | Get full market info | Market metadata and stats |
-| `get_market_pool_state` | Get pool reserves and prices | Reserves, LP tokens, prices |
-| `get_user_positions` | Get user's position IDs | Vector of position IDs |
-| `get_position` | Get position details | User, outcome, shares, price, timestamp |
-| `get_market_analytics` | Get market analytics | Volume, trades, fees |
-| `get_trade_history` | Get recent trades | Vector of trade records |
-| `get_price_history` | Get price chart data | Vector of price points |
-| `get_market_ohlc_data` | Get OHLC candlestick data | Vector of OHLC data |
-| `calculate_trade_output` | Simulate trade result | Shares/amount, price, impact |
-| `get_platform_stats` | Get platform-wide stats | Markets, TVL, active markets |
-| `get_user_lp_balance` | Get user's LP token balance | LP tokens |
-| `get_all_market_ids` | Get all market IDs | Vector of market IDs |
-| `get_markets_paginated` | Get paginated market IDs | Vector of market IDs |
-| `get_market_summary` | Get market summary | ID, title, description, etc. |
-| `get_market_count` | Get total market count | Number of markets |
-| `get_platform_params` | Get platform parameters | Fee rates, minimums |
-| `get_asset_metadata` | Get asset metadata | Asset metadata object |
-| `get_market_depth` | Get market depth info | Reserves, bid/ask prices |
-| `get_latest_trades` | Get recent trades feed | Vector of trade records |
-| `get_price_at_timestamp` | Get historical price | Price at timestamp |
-| `get_volume_weighted_average_price` | Calculate VWAP | VWAP for outcome |
-| `get_daily_volume` | Get volume for a specific day | Daily volume |
-| `get_hourly_volume` | Get volume for a specific hour | Hourly volume |
-| `get_trade_by_id` | Get trade by ID | Trade record |
-| `get_user_trade_history` | Get user's trade history | Vector of trade records |
-| `get_volume_by_time_range` | Get volume in date range | Volume, trade count |
+| `getMarketDetails` | Get full market info | Market metadata and stats |
+| `getMarketPoolInfo` | Get pool reserves and LP data | Reserves, LP tokens, shares |
+| `getUserPositions` | Get user's position IDs | Array of position IDs |
+| `getPosition` | Get position details | User, outcome, shares, price |
+| `getMarketAnalytics` | Get market analytics | Volume, trades, fees |
+| `calculateOutcomePrice` | Get current price | Price in PRICE_PRECISION |
+| `getGlobalPoolStats` | Get global pool info | Deposits, allocations, LP tokens |
+| `getUserGlobalLpBalance` | Get user's global LP tokens | LP token balance |
+| `getMarketLpBalance` | Get user's market LP tokens | LP token balance |
+| `getAllMarketIds` | Get all market IDs | Array of market IDs |
+| `marketExists` | Check if market exists | Boolean |
+
+### ZENT Token Functions
+
+| Function | Description | Parameters |
+|----------|-------------|------------|
+| `stake` | Stake ZENT tokens | `amount, lockDuration` |
+| `unstake` | Unstake tokens (after lock) | `amount` |
+| `claimRewards` | Claim staking rewards | None |
+| `compoundRewards` | Reinvest rewards | None |
+| `calculatePendingRewards` | View pending rewards | `account` |
+| `getStakingInfo` | Get complete staking info | `account` |
+| `buyTokensInSale` | Buy ZENT in public sale | `baseTokenAmount` |
+| `getTradingFeeDiscount` | Get user's fee discount | `account` |
+| `getMarketCreationDiscount` | Get creation discount | `account` |
+| `getLPBoost` | Get LP boost multiplier | `account` |
+
+## ZENT Token & Staking
+
+### Token Economics
+
+- **Total Supply**: Configurable (e.g., 1,000,000,000 ZENT)
+- **Public Sale Allocation**: Configurable percentage
+- **Staking Rewards**: Funded by platform treasury
+- **Utility**: Governance, staking, fee discounts, dispute resolution
+
+### Staking Mechanism
+
+1. **Lock Period**: Minimum 30 days, maximum 4 years
+2. **Tier Progression**: Automatic based on staked amount
+3. **Rewards**: Calculated per second with tier multipliers
+4. **Compounding**: Reinvest rewards to increase stake
+5. **Dispute Locking**: Tokens locked during active disputes
+
+### Reward Distribution
+
+- Rewards calculated using `accRewardPerShare` with high precision (1e36)
+- Tier multipliers applied to base rewards
+- APY varies by tier and total staked amount
+- Rewards claimed separately or compounded into stake
+
+### Public Sale
+
+- Owner can initialize token sale with configurable price
+- Users buy ZENT with USDT
+- Automatic token distribution
+- Remaining tokens returned to owner on sale end
 
 ## Fee Structure
 
 ### Trading Fees
-- **Trade Fee**: 1% (100 basis points)
-- Applied on buy and sell transactions
+- **Standard Markets**: 1% (100 basis points)
+- **Optima Markets with Global Liquidity**: 0.8% (80 basis points)
+- **ZENT Staker Discounts**: Up to 50% reduction
+- Applied on buy transactions
 - Distributed to platform and creators
 
 ### Platform Fees
@@ -321,79 +395,79 @@ aptos move run \
 - Sent to platform admin
 
 ### Creator Fees
-- **Creator Fee**: 20% of total trading fees
+- **Creator Fee**: 20% of total trading fees collected
 - Rewarded to market creator
 - Incentivizes quality market creation
 
 ### Market Creation
-- **Creation Fee**: 10,000 units (0.01 USDC)
-- Minimum initial liquidity: 100,000 units (0.1 USDC)
-- Minimum market duration: 3,600 seconds (1 hour)
+- **Base Creation Fee**: 1 USDT
+- **ZENT Staker Discounts**: Up to 70% reduction
+- **Minimum Initial Liquidity**: 10 USDT (Standard), 1,000 USDT (Optima)
+- **Minimum Market Duration**: 1 hour (3,600 seconds)
 
-## Analytics & Data
+### Global Liquidity Pool Fees
+- **Global LP Fee Rate**: 0.8% (80 basis points) on Optima trades
+- **Global LP Share**: 50% of fees go to global LP providers
+- Distributed proportionally to LP token holders
 
-### Available Metrics
-
-- **Total Volume**: Cumulative trading volume
-- **Trade Count**: Number of trades executed
-- **YES/NO Volume**: Separate volume tracking
-- **Liquidity Volume**: Volume from liquidity operations
-- **Unique Traders**: Count of unique participants
-- **Daily/Hourly Volume**: Time-series volume data
-- **Price History**: Historical price points
-- **OHLC Data**: Candlestick chart data
-- **VWAP**: Volume-weighted average price
-
-### Data Storage
-
-- Last 1,000 trades stored per market (configurable)
-- Efficient table-based storage
-- Indexed by timestamp for queries
+### Dispute Fees
+- **Minimum Dispute Stake**: 1,000 ZENT
+- **Dispute Reward**: 100 ZENT for successful challenges
+- **Slashing**: 100% of stake for failed disputes
 
 ## Security
 
 ### Access Controls
 
-- **Admin only**: Platform parameter updates
+- **Owner only**: Platform configuration, pause, dispute finalization, ZENT minting
 - **Oracle/Admin/Creator**: Market resolution
-- **Position owner only**: Sell positions, claim winnings
-- **LP provider only**: Remove liquidity, claim principal
+- **Position owner only**: Claim winnings
+- **LP provider only**: Withdraw liquidity, claim principal
+- **Platform contract only**: ZENT token locking/slashing
 
 ### Safety Features
 
-- ✅ Slippage protection (max 10% price impact)
+- ✅ OpenZeppelin battle-tested contracts
+- ✅ ReentrancyGuard on all state-changing functions
+- ✅ BEP-40 compatibility layer with balance verification
+- ✅ Slippage protection with maximum price limits
 - ✅ Balance validation before transfers
-- ✅ Market state checks (resolved, ended)
+- ✅ Market state checks (resolved, ended, disputed)
 - ✅ Outcome validation (1 or 2 only)
 - ✅ Zero-amount guards
 - ✅ Division by zero prevention
-- ✅ Overflow protection
+- ✅ Overflow protection (Solidity 0.8+)
+- ✅ Pause functionality for emergency stops
+- ✅ Dispute window to prevent premature claims
+- ✅ Token lock mechanisms for disputes
 
-### Error Codes
+### BEP-40 Compatibility
 
-| Code | Error | Description |
-|------|-------|-------------|
-| `E_NOT_ADMIN` | 0 | Caller not authorized |
-| `E_MARKET_ENDED` | 1 | Market past end time |
-| `E_MARKET_NOT_ENDED` | 2 | Market still active |
-| `E_MARKET_RESOLVED` | 3 | Market already resolved |
-| `E_MARKET_NOT_RESOLVED` | 4 | Market not yet resolved |
-| `E_INVALID_OUTCOME` | 5 | Invalid outcome value |
-| `E_NO_WINNINGS` | 6 | No winnings to claim |
-| `E_INVALID_BET_AMOUNT` | 7 | Invalid amount provided |
-| `E_MARKET_NOT_FOUND` | 8 | Market does not exist |
-| `E_ALREADY_INITIALIZED` | 9 | Contract already initialized |
-| `E_POSITION_NOT_FOUND` | 10 | Position does not exist |
-| `E_INSUFFICIENT_LIQUIDITY` | 11 | Insufficient funds |
-| `E_INVALID_PRICE` | 12 | Price below minimum |
-| `E_SLIPPAGE_EXCEEDED` | 13 | Price moved too much |
-| `E_INVALID_END_TIME` | 14 | Invalid market end time |
-| `E_ASSET_NOT_REGISTERED` | 15 | Asset not registered |
-| `E_ZERO_PRICE` | 16 | Price is zero |
-| `E_ZERO_SHARES` | 17 | Zero shares in trade |
-| `E_ZERO_TOTAL_SHARES` | 18 | No shares in pool |
-| `E_INSUFFICIENT_POOL_BALANCE` | 19 | Pool balance too low |
-| `E_INVALID_LIQUIDITY` | 20 | Invalid liquidity amount |
+The contract includes a robust compatibility layer for BSC USDT (BEP-40):
+- Safe transfer functions with balance verification
+- Explicit success checks on transfers
+- Proper allowance handling
+- Helper functions for user-friendly approvals
+
+### Audit Recommendations
+
+- Complete security audit before mainnet deployment
+- Thorough testing of all edge cases
+- Fuzz testing for AMM calculations
+- Gas optimization review
+- Frontend integration testing with BSC USDT
+
+## Error Messages
+
+The contract uses descriptive error messages for all require statements:
+- "Invalid base token", "Invalid platform", "Invalid token"
+- "Contract paused", "Not initialized", "Already minted"
+- "Market not found", "Already resolved", "Market ended"
+- "Insufficient USDT balance", "Insufficient USDT allowance"
+- "Invalid amount", "Invalid outcome", "Invalid tier"
+- "Insufficient staked", "Still locked", "Tokens locked in dispute"
+- "Active dispute", "Dispute window active", "No rewards to claim"
+- And many more for comprehensive error handling
 
 ## Example Use Cases
 
@@ -403,6 +477,7 @@ aptos move run \
 - Users bet YES or NO
 - Oracle resolves after game
 - Winners claim proportional payouts
+- Community can dispute incorrect resolutions
 ```
 
 ### Price Predictions
@@ -410,6 +485,7 @@ aptos move run \
 "Will BTC reach $100K by Dec 2025?"
 - Prices adjust based on market sentiment
 - Real-time trading until deadline
+- ZENT stakers get fee discounts
 - Transparent settlement
 ```
 
@@ -419,16 +495,57 @@ aptos move run \
 - Company creates market
 - Employees/public trade
 - Aggregates collective wisdom
+- Dispute mechanism ensures fairness
+```
+
+### Governance Decisions
+```
+"Will the proposal pass?"
+- Community stakes ZENT to participate
+- Market prices reflect sentiment
+- Resolution after vote completes
 ```
 
 ## Roadmap
 
+- [x] Core prediction market functionality
+- [x] CPMM automated market maker
+- [x] ZENT token with staking and rewards
+- [x] Global liquidity pool with auto-allocation
+- [x] Dispute resolution mechanism
+- [x] Comprehensive analytics
 - [ ] Multi-outcome markets (>2 options)
-- [ ] Automated oracle integration (Chainlink, Pyth)
-- [ ] Advanced order types (limit orders)
-- [ ] Market maker incentives
+- [ ] Chainlink/Band Protocol oracle integration
+- [ ] Advanced order types (limit orders, stop-loss)
+- [ ] NFT-based position tokens
 - [ ] Mobile SDK integration
+- [ ] Governance voting with ZENT
+- [ ] Cross-chain bridge support
+- [ ] Layer 2 scaling solution
+
+## License
+
+MIT License - See LICENSE file for details
+
+## Disclaimer
+
+**⚠️ IMPORTANT DISCLAIMERS**:
+
+1. **Experimental Software**: This is experimental software. Use at your own risk.
+2. **Legal Compliance**: Prediction markets may be subject to legal restrictions in your jurisdiction. Users are responsible for ensuring compliance with local laws.
+3. **Financial Risk**: Trading in prediction markets involves financial risk. Only trade with funds you can afford to lose.
+4. **Smart Contract Risk**: While best practices are followed, smart contracts may contain bugs. No audit has been completed.
+5. **No Investment Advice**: Nothing in this documentation constitutes financial or investment advice.
+6. **Token Risk**: ZENT token value may fluctuate. Staking involves lock-up periods and potential slashing.
+
+## Support & Community
+
+- **Website**: https://zento.markets
+- **Documentation**: https://docs.zento.markets
+- **Twitter**: @ZentoMarkets
+- **Telegram**: t.me/ZentoMarkets
+- **GitHub**: github.com/zento-markets
 
 ---
 
-**⚠️ Disclaimer**: This is experimental software. Use at your own risk. Prediction markets may be subject to legal restrictions in your jurisdiction.
+**Built with ❤️ by the Zento Markets Team**

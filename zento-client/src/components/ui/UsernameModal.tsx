@@ -120,12 +120,12 @@ export function UsernameModal() {
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || isLoading || !username.trim()}
-            className="w-full bg-[#d5a514] hover:bg-[#095435] text-white font-semibold py-2 rounded-md"
+            className="w-full bg-[#f0b90b] hover:bg-[#d5a514] text-black font-semibold py-2 rounded-md transition-all duration-200 disabled:opacity-70"
           >
             {isSubmitting || isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating account...
+                Creating account
               </>
             ) : (
               "Continue"

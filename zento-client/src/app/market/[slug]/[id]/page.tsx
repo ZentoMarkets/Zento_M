@@ -24,7 +24,7 @@ export default async function MarketPage({ params }: MarketPageProps) {
 
   // Fetch the market data
   const market = await getMarketSummary(id);
-  console.log("market in page---", market);
+  // console.log("market in page---", market);
 
   // If market doesn't exist, show 404
   // if (!market) {
