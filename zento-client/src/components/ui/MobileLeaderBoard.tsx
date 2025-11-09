@@ -6,13 +6,14 @@ import { useWalletAuth } from "@/app/hooks/useWalletAuth";
 
 import Link from "next/link";
 import MobileBottomNav from "./MobileBottomNav";
-import { WalletSelector } from "../WalletSelector";
 import { toast } from "sonner";
+import { ConnectButton, useActiveAccount } from "thirdweb/react";
+import { client, chain, wallets } from "@/lib/thirdweb";
 
 const MobileLeaderboardPage = ({ leaderboard }: any) => {
   const [activeTab, setActiveTab] = useState("daily");
   const account = useActiveAccount();
-  const address = account?.address.toStringLong();
+  const address = account?.address.toString();
   const [completedTasks, setCompletedTasks] = useState({
     twitter: false,
     telegram: false,
@@ -345,7 +346,67 @@ const MobileLeaderboardPage = ({ leaderboard }: any) => {
               )}
 
               <div className="flex gap-1 sm:gap-2 items-center">
-                <WalletSelector />
+              <ConnectButton
+                  client={client}
+                  chain={chain}
+                  wallets={wallets}
+                  connectButton={{
+                    label: (
+                      <>
+                        {/* ✅ Proper wallet icon */}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{ marginRight: "2px" }}
+                        >
+                          <path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5z" />
+                          <path d="M21 12h-4a2 2 0 0 0 0 4h4" />
+                        </svg>
+                        Sign In
+                      </>
+                    ),
+                    style: {
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      whiteSpace: "nowrap",
+                      fontSize: "14px",
+                      gap: "0.4rem",
+                      height: "2.5rem",
+                      position: "relative",
+                      overflow: "hidden",
+                      backgroundColor: "#d5a514",
+                      color: "white",
+                      fontWeight: 600,
+                      padding: "0.75rem 0.35rem",
+                      borderRadius: "0.375rem",
+                      transition: "all 0.2s ease-in-out",
+                      cursor: "pointer",
+                    },
+                  }}
+                  detailsButton={{
+                    displayBalanceToken: {
+                      [chain.id]: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
+                    },
+                  }}
+                  connectModal={{
+                    size: "wide",
+                    title: "Sign in to your account",
+                    titleIcon: "",
+                    showThirdwebBranding: true,
+                  }}
+                  accountAbstraction={{
+                    chain: chain,
+                    sponsorGas: true,
+                  }}
+                />
               </div>
             </div>
           </div>
