@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Trophy, Medal, Award, CircleUser, User, CheckCircle2, Twitter } from "lucide-react";
+import { Trophy, Medal, Award, CircleUser, User } from "lucide-react";
 import { useWalletAuth } from "@/app/hooks/useWalletAuth";
 
 import Link from "next/link";
 import MobileBottomNav from "./MobileBottomNav";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { client, chain, wallets } from "@/lib/thirdweb";
 
@@ -14,12 +14,12 @@ const MobileLeaderboardPage = ({ leaderboard }: any) => {
   const [activeTab, setActiveTab] = useState("daily");
   const account = useActiveAccount();
   const address = account?.address.toString();
-  const [completedTasks, setCompletedTasks] = useState({
-    twitter: false,
-    telegram: false,
-  });
+  // const [completedTasks, setCompletedTasks] = useState({
+  //   twitter: false,
+  //   telegram: false,
+  // });
   const { getLeaderboard } = useWalletAuth();
-  const { awardPoints } = useWalletAuth();
+  // const { awardPoints } = useWalletAuth();
   const [leaderboardData, setLeaderboardData] = useState<any>({
     daily: [],
     weekly: [],
@@ -276,38 +276,38 @@ const MobileLeaderboardPage = ({ leaderboard }: any) => {
 
   const currentLevel = getLevel(currentUserData?.games_played);
 
-  const handleTaskComplete = (task: "twitter" | "telegram") => {
-    // Open the respective link
-    if (task === "twitter") {
-      window.open("https://x.com/intent/follow?screen_name=pivotmarketsHQ", "_blank");
-    } else {
-      window.open("https://t.me/pivotmarkets", "_blank");
-    }
+  // const handleTaskComplete = (task: "twitter" | "telegram") => {
+  //   // Open the respective link
+  //   if (task === "twitter") {
+  //     window.open("https://x.com/intent/follow?screen_name=pivotmarketsHQ", "_blank");
+  //   } else {
+  //     window.open("https://t.me/pivotmarkets", "_blank");
+  //   }
 
-    // Mark task as completed (in production, verify this on backend)
-    setCompletedTasks((prev: any) => ({ ...prev, [task]: true }));
+  //   // Mark task as completed (in production, verify this on backend)
+  //   setCompletedTasks((prev: any) => ({ ...prev, [task]: true }));
 
-    // Award points asynchronously
-    const taskPoints = task === "twitter" ? 100 : 100; // Adjust points when needed
-    awardPoints({
-      points: taskPoints,
-      action_type: `social_task_${task}`,
-      description: `User earned ${taskPoints} pts for completing ${task} task`,
-    }).catch((error) => {
-      console.error(`Failed to award points for ${task} task (non-critical):`, error);
-    });
+  //   // Award points asynchronously
+  //   const taskPoints = task === "twitter" ? 100 : 100; // Adjust points when needed
+  //   awardPoints({
+  //     points: taskPoints,
+  //     action_type: `social_task_${task}`,
+  //     description: `User earned ${taskPoints} pts for completing ${task} task`,
+  //   }).catch((error) => {
+  //     console.error(`Failed to award points for ${task} task (non-critical):`, error);
+  //   });
 
-    // Optional: Show success toast
-    toast.success(`You earned ${taskPoints} points for following on ${task === "twitter" ? "X" : "Telegram"}!`, {
-      style: {
-        backgroundColor: "#064e3b",
-        color: "#6ee7b7",
-        fontWeight: "bold",
-        border: "1px solid #10b981",
-      },
-      duration: 4000,
-    });
-  };
+  //   // Optional: Show success toast
+  //   toast.success(`You earned ${taskPoints} points for following on ${task === "twitter" ? "X" : "Telegram"}!`, {
+  //     style: {
+  //       backgroundColor: "#064e3b",
+  //       color: "#6ee7b7",
+  //       fontWeight: "bold",
+  //       border: "1px solid #10b981",
+  //     },
+  //     duration: 4000,
+  //   });
+  // };
 
   return (
     <div className="min-h-screen bg-[#1c1b20] pb-16 flex flex-col">
