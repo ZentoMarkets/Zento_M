@@ -302,25 +302,8 @@ const MarketDetailPage: React.FC<MarketDetailPageProps> = ({ market }) => {
         console.error("Price check failed:", priceError);
       }
 
-      try {
-        console.log("3. Checking if contract is paused...");
-        const paused = await readContract({
-          contract: marketContract,
-          method: "function paused() view returns (bool)",
-          params: [],
-        });
-        console.log("Contract paused:", paused);
-
-        if (paused) {
-          toast.error("Contract is currently paused");
-          return;
-        }
-      } catch (pauseError) {
-        console.error("Pause check failed:", pauseError);
-      }
-
       // === APPROVE USDT ===
-      console.log("4. Checking USDT allowance...");
+      console.log("4. Checking USDT allowance");
       const allowance = await readContract({
         contract: usdtContract,
         method: "function allowance(address owner, address spender) view returns (uint256)",
@@ -1178,7 +1161,7 @@ const MarketDetailPage: React.FC<MarketDetailPageProps> = ({ market }) => {
                 <button
                   onClick={() => setSide("YES")}
                   className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                    side === "YES" ? "bg-[#d5a514] text-white" : "bg-[#4a4a4a] text-gray-300 hover:bg-[#5a5a5a]"
+                    side === "YES" ? "bg-[#006b47] text-white" : "bg-[#4a4a4a] text-gray-300 hover:bg-[#5a5a5a]"
                   }`}
                 >
                   Yes
@@ -1273,7 +1256,7 @@ const MarketDetailPage: React.FC<MarketDetailPageProps> = ({ market }) => {
                     onChange={handleSliderChange}
                     className="w-full h-2 bg-[#1e2028] rounded-lg appearance-none cursor-pointer slider"
                     style={{
-                      background: `linear-gradient(to right, ${side === "YES" ? "#d5a514" : "#8b4444"} 0%, ${side === "YES" ? "#d5a514" : "#8b4444"} ${(sliderValue / balance) * 100}%, #1e2028 ${(sliderValue / balance) * 100}%, #1e2028 100%)`,
+                      background: `linear-gradient(to right, ${side === "YES" ? "#006b47" : "#8b4444"} 0%, ${side === "YES" ? "#d5a514" : "#8b4444"} ${(sliderValue / balance) * 100}%, #1e2028 ${(sliderValue / balance) * 100}%, #1e2028 100%)`,
                     }}
                   />
                   <div className="flex justify-between text-xs text-gray-400 mt-1">
@@ -1338,7 +1321,7 @@ const MarketDetailPage: React.FC<MarketDetailPageProps> = ({ market }) => {
                 className={`w-full py-4 rounded-lg font-semibold text-lg transition-colors ${
                   side === "NO"
                     ? "bg-[#d32f2f] hover:bg-[#b71c1c] text-white"
-                    : "bg-[#d5a514] hover:bg-[#006b47] text-white"
+                    : "bg-[#006b47] hover:bg-[#008f5a] text-white"
                 } disabled:bg-gray-600 disabled:cursor-not-allowed`}
               >
                 {isOverBalance

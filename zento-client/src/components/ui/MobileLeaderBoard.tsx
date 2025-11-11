@@ -514,7 +514,7 @@ const MobileLeaderboardPage = ({ leaderboard }: any) => {
                       minimumFractionDigits: 4,
                       maximumFractionDigits: 4,
                     })}{" "}
-                    USDC
+                    USDT
                   </div>
                 </div>
               </div>
@@ -560,7 +560,7 @@ const MobileLeaderboardPage = ({ leaderboard }: any) => {
                       minimumFractionDigits: 4,
                       maximumFractionDigits: 4,
                     })}{" "}
-                    USDC
+                    USDT
                   </div>
                 </div>
               </div>
