@@ -220,6 +220,8 @@ const MarketDetailPage: React.FC<MarketDetailPageProps> = ({ market }) => {
       .sort((a, b) => a.timestamp - b.timestamp);
   };
 
+  const MAX_SLIPPAGE_BPS = 500;
+
   // === CALCULATE PAY ===
   const calculatePayout = (betSide: string, amount: number) => {
     if (!betSide || amount <= 0) return 0;
@@ -237,220 +239,133 @@ const MarketDetailPage: React.FC<MarketDetailPageProps> = ({ market }) => {
     marketId: number,
     outcome: "YES" | "NO",
     amountUSDC: number,
-    maxSlippageBasisPoints: number,
+    maxSlippageBasisPoints: number = MAX_SLIPPAGE_BPS,
   ) => {
-    if (!account) return;
-
+    if (!account?.address) return;
+  
     const amountWei = BigInt(Math.floor(amountUSDC * 1e18));
     const outcomeValue = outcome === "YES" ? 1 : 2;
-
-    try {
-      console.log("=== STARTING BUY PROCESS ===");
-      console.log("Parameters:", {
-        marketId,
-        outcome,
-        amountUSDC,
-        amountWei: amountWei.toString(),
-        outcomeValue,
-        maxSlippageBasisPoints,
-      });
-
-      // Convert marketId to BigInt for uint64
-      const marketIdBigInt = BigInt(marketId);
-
-      // === DEBUG: CHECK CONTRACT STATE FIRST ===
-      toast.info("Checking contract state...");
-      try {
-        console.log("1. Checking market details...");
-        const marketDetails = await readContract({
-          contract: marketContract,
-          method:
-            "function getMarketDetails(uint64) view returns (uint64, string, string, uint64, bool, uint8, uint8, uint256, address, address)",
-          params: [marketIdBigInt],
-        });
-        console.log("Market details:", marketDetails);
-
-        const [id, endTime, resolved] = marketDetails;
-        console.log("Market status:", {
-          id: id.toString(),
-          resolved,
-          endTime: new Date(Number(endTime) * 1000),
-          currentTime: new Date(),
-        });
-
-        if (resolved) {
-          toast.error("Market is already resolved");
-          return;
-        }
-        if (Number(endTime) < Math.floor(Date.now() / 1000)) {
-          toast.error("Market has ended");
-          return;
-        }
-      } catch (debugError) {
-        console.error("Debug market details failed:", debugError);
-      }
-
-      try {
-        console.log("2. Checking price calculation...");
-        const price = await readContract({
-          contract: marketContract,
-          method: "function calculateOutcomePrice(uint64, uint8) view returns (uint256)",
-          params: [marketIdBigInt, outcomeValue],
-        });
-        console.log("Current price:", price.toString(), `(${Number(price) / 1e18})`);
-      } catch (priceError) {
-        console.error("Price check failed:", priceError);
-      }
-
-      // === APPROVE USDT ===
-      console.log("4. Checking USDT allowance");
-      const allowance = await readContract({
-        contract: usdtContract,
-        method: "function allowance(address owner, address spender) view returns (uint256)",
-        params: [account.address, MARKET_CONTRACT_ADDRESS],
-      });
-
-      console.log("Current allowance:", allowance.toString(), "Required:", amountWei.toString());
-
-      if (BigInt(allowance) < amountWei) {
-        toast.info("Approving USDT...");
-
-        const approveTx = prepareContractCall({
-          contract: usdtContract,
-          method: "function approve(address spender, uint256 amount)",
-          params: [MARKET_CONTRACT_ADDRESS, amountWei],
-        });
-
-        await new Promise((resolve, reject) => {
-          sendTransaction(approveTx, {
-            onSuccess: (result) => {
-              console.log("✓ Approval successful:", result);
-              toast.success("USDT approved!");
-              resolve(result);
-            },
-            onError: (err) => {
-              console.error("✗ Approval failed:", err);
-              toast.error("USDT approval failed");
-              reject(err);
-            },
-          });
-        });
-
-        // Wait for blockchain confirmation
-        await new Promise((r) => setTimeout(r, 5000));
-
-        // Verify allowance was set
-        const newAllowance = await readContract({
-          contract: usdtContract,
-          method: "function allowance(address owner, address spender) view returns (uint256)",
-          params: [account.address, MARKET_CONTRACT_ADDRESS],
-        });
-        console.log("New allowance after approval:", newAllowance.toString());
-      } else {
-        console.log("✓ Sufficient allowance already exists");
-      }
-
-      // === BUY POSITION ===
-      console.log("6. Executing buy position...");
-
-      // Calculate maxPrice based on current price + slippage
-      // First get current price
-      let currentPriceWei = BigInt(0);
-      try {
-        currentPriceWei = await readContract({
-          contract: marketContract,
-          method: "function calculateOutcomePrice(uint64, uint8) view returns (uint256)",
-          params: [marketIdBigInt, outcomeValue],
-        });
-        console.log("Current price for maxPrice calculation:", currentPriceWei.toString());
-      } catch (error) {
-        console.error("Failed to get current price for maxPrice calculation:", error);
-        // Fallback to a reasonable maxPrice
-        currentPriceWei = BigInt(Math.floor(1.0 * 1e18));
-      }
-
-      // Calculate maxPrice with slippage
-      const slippageMultiplier = (10000 + maxSlippageBasisPoints) / 10000;
-      const maxPrice = BigInt(Math.floor(Number(currentPriceWei) * slippageMultiplier));
-
-      console.log("Final buy parameters:", {
-        marketId: marketIdBigInt.toString(),
-        outcome: outcomeValue,
-        amount: amountWei.toString(),
-        maxPrice: maxPrice.toString(),
-        currentPrice: currentPriceWei.toString(),
-        slippage: `${maxSlippageBasisPoints / 100}%`,
-      });
-
-      const buyTx = prepareContractCall({
+    const marketIdBI = BigInt(marketId);
+  
+    // -----------------------------------------------------------------
+    // 1. Parallel read: price + allowance + USDT balance (one RPC batch)
+    // -----------------------------------------------------------------
+    const [priceWei, allowanceWei, usdtBalanceWei] = await Promise.all([
+      readContract({
         contract: marketContract,
-        method: "function buyPosition(uint64 marketId, uint8 outcome, uint256 amount, uint256 maxPrice)",
-        params: [marketIdBigInt, outcomeValue, amountWei, maxPrice],
+        method:
+          "function calculateOutcomePrice(uint64, uint8) view returns (uint256)",
+        params: [marketIdBI, outcomeValue],
+      }).catch(() => BigInt(0)), // fallback → will be caught later
+  
+      readContract({
+        contract: usdtContract,
+        method:
+          "function allowance(address owner, address spender) view returns (uint256)",
+        params: [account.address, MARKET_CONTRACT_ADDRESS],
+      }).catch(() => BigInt(0)),
+  
+      readContract({
+        contract: usdtContract,
+        method: "function balanceOf(address) view returns (uint256)",
+        params: [account.address],
+      }).catch(() => BigInt(0)),
+    ]);
+  
+    // -----------------------------------------------------------------
+    // 2. Fast-fail checks
+    // -----------------------------------------------------------------
+    if (usdtBalanceWei < amountWei) {
+      toast.error("Insufficient USDT balance");
+      return;
+    }
+    if (priceWei === BigInt(0)) {
+      toast.error("Could not fetch market price");
+      return;
+    }
+  
+    // -----------------------------------------------------------------
+    // 3. Approve **only if needed** – no extra read after tx
+    // -----------------------------------------------------------------
+    if (allowanceWei < amountWei) {
+      toast.info("Approving USDT…");
+      const approveTx = prepareContractCall({
+        contract: usdtContract,
+        method: "function approve(address spender, uint256 amount)",
+        params: [MARKET_CONTRACT_ADDRESS, amountWei],
       });
-
-      await new Promise((resolve, reject) => {
-        sendTransaction(buyTx, {
-          onSuccess: async (result) => {
-            console.log("✓ Buy transaction successful:", result);
-
-            toast.success(`Bought ${outcome} for ${amountUSDC.toFixed(2)} USDT`, {
-              style: { backgroundColor: "#064e3b", color: "#6ee7b7", border: "1px solid #10b981" },
-              duration: 6000,
-            });
-
-            // Update balances and refetch data
-            await refetchUSDTBalance();
-            queryClient.refetchQueries();
-
-            // Award points
-            awardPoints({
-              points: amountUSDC,
-              action_type: `buy_${marketId}`,
-              description: `Bet ${amountUSDC} USDT`,
-            }).catch(() => {});
-
-            // Refetch market data
-            try {
-              const details = await getMarketDetails(marketId);
-              const positions: any = await getUserPositionDetails(marketId.toString(), parseFloat(account.address));
-              setMarketDetails(details as any);
-              setUserPositions(positions || []);
-            } catch (refetchError) {
-              console.error("Error refetching data:", refetchError);
-            }
-
-            resolve(null);
+  
+      await new Promise<void>((resolve, reject) => {
+        sendTransaction(approveTx, {
+          onSuccess: (hash) => {
+            toast.success("USDT approved!");
+            resolve();
           },
           onError: (err) => {
-            console.error("✗ Buy transaction failed:", err);
-
-            // Enhanced error parsing
-            let errorMessage = "Buy failed. Try again.";
-            if (err.message?.includes("Invalid amount")) errorMessage = "Invalid amount";
-            else if (err.message?.includes("Market not found")) errorMessage = "Market not found";
-            else if (err.message?.includes("Market resolved")) errorMessage = "Market already resolved";
-            else if (err.message?.includes("Market ended")) errorMessage = "Market has ended";
-            else if (err.message?.includes("Invalid outcome")) errorMessage = "Invalid outcome selection";
-            else if (err.message?.includes("Active dispute")) errorMessage = "Market has active dispute";
-            else if (err.message?.includes("Price too high"))
-              errorMessage = `Price too high - try increasing slippage above ${maxSlippageBasisPoints / 100}%`;
-            else if (err.message?.includes("Insufficient USDT balance")) errorMessage = "Insufficient USDT balance";
-            else if (err.message?.includes("Approve USDT first")) errorMessage = "Need to approve USDT first";
-            else if (err.message?.includes("Zero shares")) errorMessage = "Amount too small to get shares";
-
-            toast.error(errorMessage, {
-              style: { backgroundColor: "#7f1d1d", color: "#fca5a5", border: "1px solid #fca5a5" },
-              duration: 6000,
-            });
+            toast.error("Approval failed");
             reject(err);
           },
         });
       });
-    } catch (error) {
-      console.error("=== BUY PROCESS ERROR ===", error);
-      toast.error("Transaction failed - check console for details");
-      throw error;
+  
+      // **No 5 s sleep** – we trust the tx receipt (wagmi already waits)
+      // If you really need to be 100 % sure, poll once:
+      // await waitForTransactionReceipt(...);
+    } else {
+      console.log("Sufficient allowance already exists");
     }
+  
+    // -----------------------------------------------------------------
+    // 4. Build maxPrice (price + slippage) – **no extra RPC**
+    // -----------------------------------------------------------------
+    const slippageMul = (10000 + maxSlippageBasisPoints) / 10000;
+    const maxPriceWei = BigInt(
+      Math.floor(Number(priceWei) * slippageMul),
+    );
+  
+    // -----------------------------------------------------------------
+    // 5. Fire the BUY tx
+    // -----------------------------------------------------------------
+    const buyTx = prepareContractCall({
+      contract: marketContract,
+      method:
+        "function buyPosition(uint64 marketId, uint8 outcome, uint256 amount, uint256 maxPrice)",
+      params: [marketIdBI, outcomeValue, amountWei, maxPriceWei],
+    });
+  
+    await new Promise<void>((resolve, reject) => {
+      sendTransaction(buyTx, {
+        onSuccess: async (hash) => {
+          toast.success(
+            `Bought ${outcome} for ${amountUSDC.toFixed(2)} USDT`,
+            { duration: 6000 },
+          );
+  
+          // ---------- NON-BLOCKING REFETCH ----------
+          // Fire-and-forget – UI stays snappy
+          Promise.allSettled([
+            refetchUSDTBalance(),
+            queryClient.refetchQueries({ queryKey: ["markets"] }),
+            awardPoints({
+              points: amountUSDC,
+              action_type: `buy_${marketId}`,
+              description: `Bet ${amountUSDC} USDT`,
+            }).catch(() => {}),
+  
+            // optional market-details refresh
+            getMarketDetails(marketId).then((d) => setMarketDetails(d as any)),
+            getUserPositionDetails(marketId.toString(), parseFloat(account.address))
+              .then((p) => setUserPositions(p ?? [] as any))
+              .catch(() => {}),
+          ]).then(() => resolve());
+        },
+        onError: (err: any) => {
+
+          toast.error("Error", { duration: 6000 });
+          reject(err);
+        },
+      });
+    });
   };
 
   // === SELL & CLAIM (Similar pattern) ===
